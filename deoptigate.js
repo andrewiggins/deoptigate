@@ -2,8 +2,8 @@
 
 /* eslint-disable camelcase */
 
-const LogReader = require('v8-tools-core/logreader')
-const { Profile } = require('v8-tools-core/profile')
+const { LogReader, parseString, parseVarArgs } = require('@andrewiggins/v8-tools-core/logreader')
+const { Profile } = require('@andrewiggins/v8-tools-core/profile')
 
 const IcEntry = require('./lib/log-processing/ic-entry')
 const DeoptEntry = require('./lib/log-processing/deopt-entry')
@@ -35,7 +35,15 @@ function locationKey(file, line, column) {
 }
 
 const propertyICParser = [
-  parseInt, parseInt, parseInt, null, null, parseInt, null, null, null
+  parseInt,
+  parseInt,
+  parseInt,
+  parseString,
+  parseString,
+  parseInt,
+  parseString,
+  parseString,
+  parseString
 ]
 
 class DeoptProcessor extends LogReader {
@@ -51,7 +59,7 @@ class DeoptProcessor extends LogReader {
         // Collect info about CRUD of code
         'code-creation': {
             parsers: [
-              null, parseInt, parseInt, parseInt, parseInt, null, 'var-args'
+              parseString, parseInt, parseInt, parseInt, parseInt, parseString, parseVarArgs
             ]
           , processor: this._processCodeCreation.bind(this)
         }
@@ -71,7 +79,7 @@ class DeoptProcessor extends LogReader {
       // Collect deoptimization info
       , 'code-deopt': {
             parsers: [
-              parseInt, parseInt, parseInt, parseInt, parseInt, null, null, null
+              parseInt, parseInt, parseInt, parseInt, parseInt, parseString, parseString, parseString
             ]
           , processor: this._processCodeDeopt.bind(this)
         }
