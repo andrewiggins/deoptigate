@@ -1,5 +1,5 @@
 {
-  "name": "deoptigate",
+  "name": "@andrewiggins/deoptigate",
   "version": "0.5.0",
   "description": "Investigates v8/Node.js function deoptimizations.",
   "bin": "./bin/deoptigate",
@@ -13,9 +13,9 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git://github.com/thlorenz/deoptigate.git"
+    "url": "git://github.com/andrewiggins/deoptigate.git"
   },
-  "homepage": "https://github.com/thlorenz/deoptigate",
+  "homepage": "https://github.com/andrewiggins/deoptigate",
   "dependencies": {
     "ansicolors": "~0.3.2",
     "files-provider": "~0.2.0",
@@ -26,14 +26,10 @@
   },
   "keywords": [],
   "author": {
-    "name": "Thorsten Lorenz",
-    "email": "thlorenz@gmx.de",
-    "url": "http://thlorenz.com"
+    "name": "Andre Wiggins",
+    "url": "http://github.com/andrewiggins"
   },
-  "license": {
-    "type": "MIT",
-    "url": "https://github.com/thlorenz/deoptigate/blob/master/LICENSE"
-  },
+  "license": "MIT",
   "engine": {
     "node": ">=8"
   },
