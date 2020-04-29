@@ -23,12 +23,14 @@ function repoRoot(...args) {
 async function prepareLogFile(srcLog, replacements) {
   let contents = await readFile(srcLog, 'utf8')
 
-  // Windows + Git shenanigans
-  contents = contents.replace(/\r\n/g, '\n');
+  // Windows + Git shenanigans - make sure log files end in only '\n'
+  // as required by v8 tooling
+  contents = contents.replace(/\r\n/g, '\n')
   for (const [template, realPath] of replacements) {
     contents = contents.replace(
       new RegExp(escapeRegex(template), 'g'),
-      realPath
+      // Windows paths need to be double escaped in the logs
+      realPath.replace(/\\/g, '\\\\')
     )
   }
 
