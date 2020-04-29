@@ -1,6 +1,6 @@
 {
   "name": "@andrewiggins/deoptigate",
-  "version": "0.5.1",
+  "version": "0.6.0",
   "description": "Investigates v8/Node.js function deoptimizations.",
   "bin": "./bin/deoptigate",
   "main": "deoptigate.js",
