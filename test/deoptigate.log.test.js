@@ -51,12 +51,12 @@ test('adders.v8.log', async (t) => {
   const addersSrcFile = replacements[0][1]
   const srcLogPath = path.join(__dirname, 'logs', 'adders.v8.log')
   const destLogPath = await prepareLogFile(srcLogPath, replacements)
-  
+
   const result = await deoptigateLog(destLogPath)
   t.equal(result.size, 1, 'number of files')
-  
+
   const fileData = result.get(addersSrcFile)
-  const fileSrc = await readFile(addersSrcFile, 'utf8');
+  const fileSrc = await readFile(addersSrcFile, 'utf8')
   t.equal(fileData.fullPath, addersSrcFile, 'fullPath')
   t.equal(fileData.ics.size, 33, 'number of ics')
   t.equal(fileData.deopts.size, 7, 'number of deopts')
@@ -95,7 +95,7 @@ test('two-modules.v8.log', async (t) => {
   t.equal(result.size, 2, 'number of files')
 
   const fileData = result.get(srcFile)
-  const fileSrc = await readFile(srcFile, 'utf8');
+  const fileSrc = await readFile(srcFile, 'utf8')
   t.equal(fileData.fullPath, srcFile, 'fullPath')
   t.equal(fileData.ics.size, 25, 'number of ics')
   t.equal(fileData.deopts.size, 0, 'number of deopts')
@@ -110,4 +110,51 @@ test('two-modules.v8.log', async (t) => {
 
   const updateData = icData.updates[0]
   t.equal(updateData.map, '37cdf3b7a811', 'ics update map')
+})
+
+test.only('html-inline.v8.log', async (t) => {
+  t.plan(9)
+
+  // 'file:///C:/code/github/andrewiggins/deoptigate/examples/html-inline/adders.html',
+  // const replacements = [
+  //   [
+  //     '/tmp/deoptigate/examples/simple/adders.js',
+  //     repoRoot('examples/simple/adders.js'),
+  //   ],
+  // ]
+  // const addersSrcFile = replacements[0][1]
+
+  // Update parseSourcePosition to handle file:// (windows & linux)
+  // Update lib\grouping\resolve-files.js:resolveAll to read file:// URLs
+
+  // Update parseSourcePosition to handle http(s)://
+  // Update lib\grouping\resolve-files.js:resolveAll to download http(s):// URLs
+
+  const replacements = []
+  const addersSrcUrl =
+    'file:///C:/code/github/andrewiggins/deoptigate/examples/html-inline/adders.html'
+  const addersSrcFile = repoRoot('examples/html-inline/adders.html')
+
+  const srcLogPath = path.join(__dirname, 'logs', 'html-inline.v8.log')
+  const destLogPath = await prepareLogFile(srcLogPath, replacements)
+
+  const result = await deoptigateLog(destLogPath)
+  t.equal(result.size, 1, 'number of files')
+
+  const fileData = result.get(addersSrcUrl)
+  const fileSrc = await readFile(addersSrcFile, 'utf8')
+  t.equal(fileData.fullPath, addersSrcUrl, 'fullPath')
+  t.equal(fileData.ics.size, 33, 'number of ics')
+  t.equal(fileData.deopts.size, 7, 'number of deopts')
+  t.equal(fileData.codes.size, 16, 'number of codes')
+  t.equal(fileData.src, fileSrc, 'file source')
+
+  const deoptLocation = fileData.deoptLocations[0]
+  t.equal(deoptLocation, 'addAny:93:27', 'first deoptLocation')
+
+  const deoptData = fileData.deopts.get(deoptLocation)
+  t.equal(deoptData.file, addersSrcUrl, 'deopt file path')
+
+  const updateData = deoptData.updates[2]
+  t.equal(updateData.bailoutType, 'eager', 'deopt update bailout type')
 })
