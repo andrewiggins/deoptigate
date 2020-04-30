@@ -14,6 +14,15 @@ function repoRoot(...args) {
   return path.join(__dirname, '..', ...args)
 }
 
+function repoFileUrl(...args) {
+  let fullPath = repoRoot(...args)
+  if (process.platform === 'win32') {
+    fullPath = '/' + fullPath.replace(/\\/g, '/')
+  }
+
+  return 'file://' + fullPath
+}
+
 /**
  * Replace the temporary paths to source files with the real path
  * to the source files
@@ -112,27 +121,16 @@ test('two-modules.v8.log', async (t) => {
   t.equal(updateData.map, '37cdf3b7a811', 'ics update map')
 })
 
-test.only('html-inline.v8.log', async (t) => {
+test('html-inline.v8.log', async (t) => {
   t.plan(9)
 
-  // 'file:///C:/code/github/andrewiggins/deoptigate/examples/html-inline/adders.html',
-  // const replacements = [
-  //   [
-  //     '/tmp/deoptigate/examples/simple/adders.js',
-  //     repoRoot('examples/simple/adders.js'),
-  //   ],
-  // ]
-  // const addersSrcFile = replacements[0][1]
-
-  // Update parseSourcePosition to handle file:// (windows & linux)
-  // Update lib\grouping\resolve-files.js:resolveAll to read file:// URLs
-
-  // Update parseSourcePosition to handle http(s)://
-  // Update lib\grouping\resolve-files.js:resolveAll to download http(s):// URLs
-
-  const replacements = []
-  const addersSrcUrl =
-    'file:///C:/code/github/andrewiggins/deoptigate/examples/html-inline/adders.html'
+  const replacements = [
+    [
+      'file:///tmp/deoptigate/examples/html-inline/adders.html',
+      repoFileUrl('examples/html-inline/adders.html'),
+    ],
+  ]
+  const addersSrcUrl = replacements[0][1]
   const addersSrcFile = repoRoot('examples/html-inline/adders.html')
 
   const srcLogPath = path.join(__dirname, 'logs', 'html-inline.v8.log')
@@ -143,14 +141,14 @@ test.only('html-inline.v8.log', async (t) => {
 
   const fileData = result.get(addersSrcUrl)
   const fileSrc = await readFile(addersSrcFile, 'utf8')
-  t.equal(fileData.fullPath, addersSrcUrl, 'fullPath')
+  t.equal(fileData.fullPath, addersSrcFile, 'fullPath')
   t.equal(fileData.ics.size, 33, 'number of ics')
-  t.equal(fileData.deopts.size, 7, 'number of deopts')
-  t.equal(fileData.codes.size, 16, 'number of codes')
+  t.equal(fileData.deopts.size, 6, 'number of deopts')
+  t.equal(fileData.codes.size, 15, 'number of codes')
   t.equal(fileData.src, fileSrc, 'file source')
 
   const deoptLocation = fileData.deoptLocations[0]
-  t.equal(deoptLocation, 'addAny:93:27', 'first deoptLocation')
+  t.equal(deoptLocation, 'addAny:98:33', 'first deoptLocation')
 
   const deoptData = fileData.deopts.get(deoptLocation)
   t.equal(deoptData.file, addersSrcUrl, 'deopt file path')
