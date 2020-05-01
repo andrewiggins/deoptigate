@@ -6,16 +6,20 @@ const puppeteer = require('puppeteer')
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
 const root = (...args) => path.join(__dirname, ...args)
 
+// const htmlFile = root('examples/html-inline/adders.html')
+// const logFile = root('test/logs/html-inline-%p.v8.log')
+
+const htmlFile = root('examples/html-external/index.html')
+const logFile = root('test/logs/html-external-%p.v8.log')
+
 async function puppeteerMain() {
   var browser = await puppeteer.launch({
     ignoreDefaultArgs: ['about:blank'],
     args: [
       '--disable-extensions',
       '--no-sandbox',
-      `--js-flags=--logfile=${root(
-        'test/logs/html-inline-%p.v8.log'
-      )} --trace-ic --nologfile-per-isolate`,
-      root('examples/html-inline/adders.html'),
+      `--js-flags=--logfile=${logFile} --trace-ic --nologfile-per-isolate`,
+      htmlFile,
     ],
   })
 
@@ -46,7 +50,7 @@ async function manualMain() {
     '--js-flags=--logfile=/temp/trace/manual-main-2-%p.log --trace-ic --nologfile-per-isolate',
     '--enable-logging=stderr',
     '--v=1',
-    root('examples/html-inline/adders.html'),
+    htmlFile,
   ]
 
   console.log(`$ ${chromeBin} ${args.join(' ')}`)

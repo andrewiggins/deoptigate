@@ -156,3 +156,43 @@ test('html-inline.v8.log', async (t) => {
   const updateData = deoptData.updates[2]
   t.equal(updateData.bailoutType, 'eager', 'deopt update bailout type')
 })
+
+test('html-external.v8.log', async (t) => {
+  t.plan(9)
+
+  const replacements = [
+    [
+      'file:///tmp/deoptigate/examples/html-external/adders.js',
+      repoFileUrl('examples/html-external/adders.js'),
+    ],
+    [
+      'file:///tmp/deoptigate/examples/html-external/objects.js',
+      repoFileUrl('examples/html-external/objects.js'),
+    ],
+  ]
+  const objectsSrcUrl = replacements[1][1]
+  const objectsSrcFile = repoRoot('examples/html-external/objects.js')
+
+  const srcLogPath = path.join(__dirname, 'logs', 'html-external.v8.log')
+  const destLogPath = await prepareLogFile(srcLogPath, replacements)
+
+  const result = await deoptigateLog(destLogPath)
+  t.equal(result.size, 2, 'number of files')
+
+  const fileData = result.get(objectsSrcUrl)
+  const fileSrc = await readFile(objectsSrcFile, 'utf8')
+  t.equal(fileData.fullPath, objectsSrcFile, 'fullPath')
+  t.equal(fileData.ics.size, 25, 'number of ics')
+  t.equal(fileData.deopts.size, 0, 'number of deopts')
+  t.equal(fileData.codes.size, 9, 'number of codes')
+  t.equal(fileData.src, fileSrc, 'file source')
+
+  const icLocation = fileData.icLocations[0]
+  t.equal(icLocation, 'Object1:5:12', 'first icLocation')
+
+  const icData = fileData.ics.get(icLocation)
+  t.equal(icData.file, objectsSrcUrl, 'ics file path')
+
+  const updateData = icData.updates[0]
+  t.equal(updateData.map, '420708283eb1', 'ics update map')
+})
