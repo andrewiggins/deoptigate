@@ -17,7 +17,7 @@ const testOutPath = (...args) =>
 const binPath = repoRoot('bin/deoptigate')
 
 async function runDeoptigate(srcPath) {
-  spawnSync(process.execPath, [binPath, srcPath])
+  spawnSync(process.execPath, [binPath, srcPath], { stdio: 'inherit' })
 
   const contents = await readFile(renderDataPath, 'utf8')
 

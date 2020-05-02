@@ -162,7 +162,8 @@ async function createLogLocalHtml(args, logFile) {
     return 0;
   }
   catch(e) {
-    return 1;
+    console.error(e)
+    return 1
   }
   finally {
     if (browser) {
