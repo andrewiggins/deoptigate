@@ -107,7 +107,7 @@ class FilesView extends Component {
     const selectedClass = file === selectedFile ? 'bg-light-yellow' : ''
     return (
       <tr key={relativePath} className={'normalrow ' + selectedClass}>
-        <td class='underlined'>
+        <td className='underlined'>
           <a className={'items pl2 pr2'}
             href='#'
             onClick={onfileClicked}>

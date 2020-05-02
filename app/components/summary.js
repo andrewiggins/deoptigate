@@ -190,10 +190,10 @@ class SummaryView extends Component {
       <table key={'deopt:' + info.id}>
         <thead className='f5 b pt2'>
           <tr>
-            <td class='pt2 pr3 basegreen'>Timestamp</td>
-            <td class='pt2 pr3 basegreen'>Bailout</td>
-            <td class='pt2 pr3 basegreen'>Reason</td>
-            <td class='pt2 pr3 basegreen'>Inlined</td>
+            <td className='pt2 pr3 basegreen'>Timestamp</td>
+            <td className='pt2 pr3 basegreen'>Bailout</td>
+            <td className='pt2 pr3 basegreen'>Reason</td>
+            <td className='pt2 pr3 basegreen'>Inlined</td>
           </tr>
         </thead>
         <tbody>
@@ -229,10 +229,10 @@ class SummaryView extends Component {
       <table key={'ic:' + info.id}>
         <thead className='f5 b '>
           <tr>
-            <td class='pt2 pr3 basegreen'>Old State</td>
-            <td class='pt2 pr3 basegreen'>New State</td>
-            <td class='pt2 pr3 basegreen'>Key</td>
-            <td class='pt2 pr3 basegreen'>Map</td>
+            <td className='pt2 pr3 basegreen'>Old State</td>
+            <td className='pt2 pr3 basegreen'>New State</td>
+            <td className='pt2 pr3 basegreen'>Key</td>
+            <td className='pt2 pr3 basegreen'>Map</td>
           </tr>
         </thead>
         <tbody>
@@ -274,8 +274,8 @@ class SummaryView extends Component {
       <table key={'code:' + info.id}>
         <thead className='f5 b '>
           <tr>
-            <td class='pt2 pr3 basegreen'>Timestamp</td>
-            <td class='pt2 pr3 basegreen'>Optimization State</td>
+            <td className='pt2 pr3 basegreen'>Timestamp</td>
+            <td className='pt2 pr3 basegreen'>Optimization State</td>
           </tr>
         </thead>
         <tbody>
