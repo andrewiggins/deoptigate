@@ -1,5 +1,6 @@
 'use strict'
 
+const path = require('path')
 const { spawn } = require('ispawn')
 const { tmpdir } = require('os')
 const fs = require('fs')
@@ -10,6 +11,8 @@ const mkdir = promisify(fs.mkdir)
 const stat = promisify(fs.stat)
 
 const { brightBlack } = require('ansicolors')
+
+const delay = ms => new Promise(resolve => setTimeout(resolve, ms))
 
 function determineArgs(args) {
   const __index = args.indexOf('--')
@@ -72,25 +75,25 @@ async function createDirIfMissing(dir) {
   }
 }
 
-async function createLog(args, head, simpleHead) {
-  const { extraExecArgv, argv,  nodeExecutable } = determineArgs(args)
-
+async function getLogFilePath() {
   const logDir = `${tmpdir()}/deoptigate`
   await createDirIfMissing(logDir)
 
-  const logFile = `${tmpdir()}/deoptigate/v8.log`
+  return path.join(tmpdir(), '/deoptigate/v8.log')
+}
 
-  const execArgv = [
-      '--trace-ic'
-    , `--logfile=${logFile}`
-    , '--no-logfile-per-isolate'
-  ].concat(extraExecArgv)
+async function createLog(args, head, simpleHead) {
+  const firstArg = args[0]
+  const logFile = await getLogFilePath();
 
-  const spawnArgs = { execArgv, argv }
-  if (nodeExecutable != null) spawnArgs.node = nodeExecutable
+  let code
+  if (firstArg.endsWith('.html')) {
+    code = await createLogLocalHtml(args, logFile)
+  }
+  else {
+    code = await createLogLocalJs(args, logFile)
+  }
 
-  const { termination } = spawn(spawnArgs)
-  const code = await termination
   const terminationMsg = (code == null
     ? 'process was interrupted'
     : 'process completed with code ' + code
@@ -98,6 +101,74 @@ async function createLog(args, head, simpleHead) {
   console.log(`\n${head} ${brightBlack(terminationMsg)}`)
   console.log(`${simpleHead} ${brightBlack('logfile written to ' + logFile)}`)
   return logFile
+}
+
+async function createLogLocalJs(args, logFile) {
+  const { extraExecArgv, argv,  nodeExecutable } = determineArgs(args)
+
+  const execArgv = [
+    '--trace-ic',
+    `--logfile=${logFile}`,
+    '--no-logfile-per-isolate'
+  ].concat(extraExecArgv)
+
+  const spawnArgs = { execArgv, argv }
+  if (nodeExecutable != null) spawnArgs.node = nodeExecutable
+
+  const { termination } = spawn(spawnArgs)
+  return termination
+}
+
+async function createLogLocalHtml(args, logFile) {
+  const htmlFile = path.isAbsolute(args[0])
+    ? args[0]
+    : path.resolve(process.cwd(), args[0])
+
+  const v8Flags = [
+    '--trace-ic',
+    `--logfile=${logFile}`,
+    '--no-logfile-per-isolate'
+  ]
+
+  let puppeteer;
+  try {
+    puppeteer = require('puppeteer');
+  }
+  catch (e) {
+    if (e.message.includes('Cannot find module')) {
+      throw new Error('Could not find puppeteer module. Please install puppeteer as a peerDependency if you want to trace HTML files')
+    }
+    else {
+      throw e
+    }
+  }
+
+  let browser;
+  try {
+    browser = await puppeteer.launch({
+      ignoreDefaultArgs: ['about:blank'],
+      args: [
+        '--disable-extensions',
+        '--no-sandbox',
+        `--js-flags=${v8Flags.join(' ')}`,
+        htmlFile,
+      ],
+    })
+
+    await browser.pages()
+
+    // Wait 5s to allow page to load
+    await delay(5000)
+    return 0;
+  }
+  catch(e) {
+    return 1;
+  }
+  finally {
+    if (browser) {
+      await browser.close()
+    }
+  }
 }
 
 module.exports = createLog

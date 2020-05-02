@@ -3,8 +3,8 @@ const path = require('path')
 const { tmpdir } = require('os')
 const { spawnSync } = require('child_process')
 const test = require('tape')
+const { repoRoot, repoFileUrl } = require('./utils')
 
-const repoRoot = (...args) => path.join(__dirname, '..', ...args)
 const renderDataPath = path.join(
   tmpdir(),
   'deoptigate',
@@ -70,6 +70,55 @@ test('deoptigate two-modules/adders.js', async (t) => {
     t.assert(Array.isArray(fileData.codes), `codes key is an Array ${i}`)
 
     const fileSrc = await readFile(srcPaths[i], 'utf8')
+    t.equal(fileData.src, fileSrc, `file source ${i}`)
+  }
+})
+
+test('deoptigate html-inline/adders.html', async (t) => {
+  const filePath = repoRoot('examples/html-inline/adders.html')
+  const fileUrl = repoFileUrl('examples/html-inline/adders.html')
+
+  const renderData = await runDeoptigate(filePath)
+  t.equal(renderData.length, 1, 'number of files')
+
+  const fileName = renderData[0][0]
+  t.equal(fileName, fileUrl, 'filename in render data')
+
+  const fileData = renderData[0][1]
+  t.equal(fileData.fullPath, filePath, 'fullPath')
+  t.assert(Array.isArray(fileData.ics), 'ics key is an Array')
+  t.assert(Array.isArray(fileData.deopts), 'deopts key is an Array')
+  t.assert(Array.isArray(fileData.codes), 'codes key is an Array')
+
+  const fileSrc = await readFile(filePath, 'utf8')
+  t.equal(fileData.src, fileSrc, 'file source')
+})
+
+test('deoptigate html-external/index.html', async (t) => {
+  const srcPath = repoRoot('examples/html-external/index.html')
+  const jsPaths = [
+    repoRoot('examples/html-external/adders.js'),
+    repoRoot('examples/html-external/objects.js'),
+  ]
+  const jsUrls = [
+    repoFileUrl('examples/html-external/adders.js'),
+    repoFileUrl('examples/html-external/objects.js'),
+  ]
+
+  const renderData = await runDeoptigate(srcPath)
+  t.equal(renderData.length, 2, 'number of files')
+
+  for (let i = 0; i < renderData.length; i++) {
+    const fileName = renderData[i][0]
+    t.equal(fileName, jsUrls[i], `filename in render data ${i}`)
+
+    const fileData = renderData[i][1]
+    t.equal(fileData.fullPath, jsPaths[i], `fullPath ${i}`)
+    t.assert(Array.isArray(fileData.ics), `ics key is an Array ${i}`)
+    t.assert(Array.isArray(fileData.deopts), `deopts key is an Array ${i}`)
+    t.assert(Array.isArray(fileData.codes), `codes key is an Array ${i}`)
+
+    const fileSrc = await readFile(jsPaths[i], 'utf8')
     t.equal(fileData.src, fileSrc, `file source ${i}`)
   }
 })

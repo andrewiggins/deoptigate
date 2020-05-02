@@ -8,20 +8,8 @@ const util = require('util')
 const readFile = util.promisify(fs.readFile)
 const writeFile = util.promisify(fs.writeFile)
 
+const { repoRoot, repoFileUrl } = require('./utils')
 const { deoptigateLog } = require('../deoptigate.log')
-
-function repoRoot(...args) {
-  return path.join(__dirname, '..', ...args)
-}
-
-function repoFileUrl(...args) {
-  let fullPath = repoRoot(...args)
-  if (process.platform === 'win32') {
-    fullPath = '/' + fullPath.replace(/\\/g, '/')
-  }
-
-  return 'file://' + fullPath
-}
 
 /**
  * Replace the temporary paths to source files with the real path

@@ -14,6 +14,7 @@ const logFile = root('test/logs/html-external-%p.v8.log')
 
 async function puppeteerMain() {
   var browser = await puppeteer.launch({
+    // headless: false,
     ignoreDefaultArgs: ['about:blank'],
     args: [
       '--disable-extensions',
@@ -23,18 +24,19 @@ async function puppeteerMain() {
     ],
   })
 
-  // var page = (await browser.pages())[0]
+  var page = (await browser.pages())[0]
 
+  console.log('Waiting...')
   // await page.waitForNavigation()
   // await page.waitForNavigation({ waitUntil: 'load' })
   // await page.waitForNavigation({ waitUntil: 'networkidle2' })
 
-  process.stdout.write('Waiting')
-  const start = Date.now()
-  while (Date.now() - start < 5000) {
-    await delay(1000)
-    process.stdout.write('.')
-  }
+  // process.stdout.write('Waiting')
+  // const start = Date.now()
+  // while (Date.now() - start < 5000) {
+  //   await delay(1000)
+  //   process.stdout.write('.')
+  // }
 
   await browser.close()
 }
