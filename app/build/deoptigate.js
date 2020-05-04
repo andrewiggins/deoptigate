@@ -31278,7 +31278,7 @@ function processLine(line, markerResolver, next, lineno, totalDigits) {
       if (column >= cols) { break }
     }
     insert()
-  } while (next != null && next.line === lineno && column < cols)
+  } while (next != null && next.line === (lineno + 1) && column < cols)
 
   // Add remaining columns (after the last marker for this line)
   if (column < cols) { s += line.slice(column + 1) }
@@ -31293,6 +31293,7 @@ function encode(line) {
 }
 
 function markOnly(code, markerResolver) {
+  code = code.replace(/\r/g, '');
   const lines = code.split('\n')
   const len = lines.length
   const totalDigits = getDigits(len)
@@ -31308,7 +31309,7 @@ function markOnly(code, markerResolver) {
     result += renderedLine
     next = nextLocation
   }
-  return `<div class="pre"'>${result}</div>`
+  return `<div class="pre" style="background-color: #f8f8f8;">${result}</div>`
 }
 
 module.exports = markOnly
