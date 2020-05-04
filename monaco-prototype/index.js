@@ -122,6 +122,45 @@ function showEvent(str) {
 }
 
 
+// Check out these source files:
+// 1. ZoneWidget: https://git.io/JfGne
+// 2. PeekViewWidget: https://git.io/JfGnJ
+// 3. ReferenceWidget: https://git.io/JfGnt
+require(['vs/editor/contrib/peekView/peekView'], peekView => {
+	console.log(peekView);
+	class Test extends peekView.PeekViewWidget {
+			constructor() {
+					super(editor, options);
+					this.create();
+			}
+			_fillBody(container) {
+					const title = document.createElement('h1');
+					title.textContent = 'Hello World!';
+					container.appendChild(title);
+					console.log(container);
+			}
+	}
+
+	const options = {
+			className: 'test-peek-widget',
+			keepEditorSelection: true
+	};
+
+	const t = new Test(editor, options);
+	t.show({
+			startLineNumber: 7,
+			startColumn: 7,
+			endLineNumber: 7,
+			endColumn: 7,
+	}, 18)
+
+	setTimeout(() => {
+			console.log('Hiding...');
+			t.hide();
+	}, 10 * 1000);
+
+})
+
 
 editor.onMouseMove(function (e) {
 	showEvent('mousemove - ' + e.target.toString());
