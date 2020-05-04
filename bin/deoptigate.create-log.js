@@ -168,6 +168,8 @@ async function createLogLocalHtml(args, logFile) {
   finally {
     if (browser) {
       await browser.close()
+      // Give the browser 1s to release v8.log
+      await delay(1000)
     }
   }
 }
