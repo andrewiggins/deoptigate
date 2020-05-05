@@ -1,21 +1,11 @@
 /** @type {(...args: any[]) => any} */
 const amdRequire = window.require
-amdRequire(['vs/editor/editor.main'], function (monaco) {
-  var jsCode = [
-    '"use strict";',
-    'function Person(age) {',
-    '	if (age) {',
-    '		this.age = age;',
-    '	}',
-    '}',
-    'Person.prototype.getAge = function () {',
-    '	return this.age;',
-    '};',
-  ].join('\n')
+amdRequire(['require', 'vs/editor/editor.main'], function (require, monaco) {
+  const html = document.getElementById('code').childNodes[1].textContent
 
   var editor = monaco.editor.create(document.getElementById('container'), {
-    value: jsCode,
-    language: 'javascript',
+    value: html,
+    language: 'text/html',
     glyphMargin: true,
     contextmenu: false,
     readOnly: true,
