@@ -1,0 +1,17 @@
+{
+  "name": "monaco-prototype",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "http-server ."
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "monaco-editor": "^0.20.0"
+  },
+  "devDependencies": {
+    "http-server": "^0.12.3"
+  }
+}
