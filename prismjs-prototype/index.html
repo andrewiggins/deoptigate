@@ -26,36 +26,10 @@
       type="text/javascript"
       src="https://unpkg.com/prismjs@1.20.0/plugins/line-numbers/prism-line-numbers.js"
     ></script>
-    <!-- Keep Markup assumes markup is around the code text, so would need to wrap the code and add the icons afterwards -->
-    <!-- <script>
-      Prism.hooks.add('before-highlight', (env) => {
-        const beforeText = new Text(env.code.slice(0, 229))
-        console.log(beforeText.data.slice(-40))
-        const afterText = new Text(env.code.slice(229))
-        console.log(afterText.data.slice(0, 40))
-
-        const link = document.createElement('a')
-        link.href = '#'
-        link.textContent = ''
-
-        env.element.textContent = ''
-        env.element.appendChild(beforeText)
-        env.element.appendChild(link)
-        env.element.appendChild(afterText)
-      })
-    </script>
-    <script
-      type="text/javascript"
-      src="https://unpkg.com/prismjs@1.20.0/plugins/keep-markup/prism-keep-markup.js"
-    ></script> -->
-
     <!-- 
-      TODO:
-
-      Consider manually walking the post highlighted DOM tree counting columns (characters in Text node)
-      and lines ("\n" characters for Prism) and inserting markers for deopts
-
-      Looking a theme.browser.js, consider putting markers at the end of the current token if inside of a token
+      Looking a theme.browser.js, consider putting markers at the end of the current token if inside of a token.
+      This is challenging because not all tokens are highlighted by PrismJS so some are in in the middle of a 
+      Text node. Would need to parse the text node to determine the current token and insert markup appropriately
      -->
 
     <script type="text/javascript">
@@ -114,7 +88,7 @@
         while (locHasMarker(markers, curLine, curColumn)) {
           const marker = markers.shift()
 
-          lastMark = document.createElement('mark')
+          const lastMark = document.createElement('mark')
           lastMark.textContent = getIcon(marker.type)
 
           element.parentNode.insertBefore(lastMark, refChild.nextSibling)
@@ -124,7 +98,22 @@
         return refChild
       }
 
-      const markers = [
+      const typeOrder = ['code', 'deopt', 'ics']
+      function sortMarkers(markers) {
+        return markers.sort((loc1, loc2) => {
+          if (loc1.line != loc2.line) {
+            return loc1.line - loc2.line
+          } else if (loc1.column != loc2.column) {
+            return loc1.column - loc2.column
+          } else if (loc1.type != loc2.type) {
+            return typeOrder.indexOf(loc1.type) - typeOrder.indexOf(loc2.type)
+          } else {
+            return 0
+          }
+        })
+      }
+
+      const markers = sortMarkers([
         { line: 9, column: 27, type: 'code' },
         { line: 11, column: 20, type: 'code' },
         { line: 95, column: 22, type: 'code' },
@@ -137,11 +126,10 @@
         { line: 111, column: 21, type: 'ics' },
         { line: 139, column: 26, type: 'code' },
         { line: 142, column: 34, type: 'deopt' },
-      ]
+      ])
 
       Prism.hooks.add('after-highlight', (env) => {
         let code = ''
-        let markerIdx = 0
 
         /** @type {Node} */
         const root = env.element
