@@ -4,6 +4,11 @@
 // 3. ReferenceWidget: https://git.io/JfGnt
 
 const typeOrder = ['code', 'deopt', 'ics']
+
+/**
+ * @typedef {{ line: number; column: number; type: string; }} Marker
+ * @param {Marker[]} markers
+ */
 function sortMarkers(markers) {
   return markers.sort((loc1, loc2) => {
     if (loc1.line != loc2.line) {
@@ -43,6 +48,113 @@ function getIcon(type) {
   }
 }
 
+/**
+ * @param {Marker} marker
+ */
+function getMarkerId(marker) {
+  return `v8-deopt-marker-${marker.line}:${marker.column}:${marker.type}`
+}
+
+const ContentWidgetClassName = 'v8-deopt-marker-content-widget'
+
+class DeoptContentWidget {
+  constructor(editor, markerData) {
+    this.editor = editor
+    this.markerData = markerData
+    this.domNode = null
+  }
+  getId() {
+    return getMarkerId(this.markerData) + '-content-widget'
+  }
+  getDomNode() {
+    if (!this.domNode) {
+      this.domNode = document.createElement('div')
+      this.domNode.className = `${ContentWidgetClassName} ${this.markerData.type}`
+      this.domNode.innerHTML = getIcon(this.markerData.type)
+      this.editor.applyFontInfo(this.domNode)
+    }
+    return this.domNode
+  }
+  getPosition() {
+    const lineNumber = this.markerData.line
+    const column = this.markerData.column
+    return {
+      position: {
+        lineNumber,
+        column,
+      },
+      preference: [0 /* monaco.editor.ContentWidgetPositionPreference.EXACT */],
+    }
+  }
+}
+
+class DeoptMarker {
+  /**
+   * @param {import('monaco-editor').editor.IStandaloneCodeEditor} editor
+   * @param {Marker} markerData
+   * @param {any} DeoptPeekView
+   * @param {import('monaco-editor')} monaco
+   */
+  constructor(editor, markerData, DeoptPeekView, monaco) {
+    this.editor = editor
+    this.markerData = markerData
+
+    this.markerId = getMarkerId(markerData)
+    this.contentWidgetId = null
+    this.peekView = new DeoptPeekView(editor, markerData)
+
+    this._addInlineWidgets(editor, markerData, monaco)
+  }
+
+  showPeekView() {
+    this.peekView.show(
+      {
+        startLineNumber: this.markerData.line,
+        startColumn: this.markerData.column,
+        endLineNumber: this.markerData.line,
+        endColumn: this.markerData.column,
+      },
+      18
+    )
+  }
+
+  /**
+   * @param {import('monaco-editor').editor.IStandaloneCodeEditor} editor
+   * @param {Marker} markerData
+   * @param {import('monaco-editor')} monaco
+   */
+  _addInlineWidgets(editor, markerData, monaco) {
+    this.decorationIds = editor.deltaDecorations(
+      [],
+      [
+        {
+          range: new monaco.Range(
+            markerData.line,
+            markerData.column,
+            markerData.line,
+            markerData.column
+          ),
+          options: {
+            className: 'v8-deopt-marker',
+            beforeContentClassName: 'v8-deopt-marker-inline',
+            glyphMarginClassName: 'v8-deopt-marker-margin',
+            // inlineClassNameAffectsLetterSpacing: true,
+          },
+        },
+      ]
+    )
+
+    const contentWidget = new DeoptContentWidget(editor, markerData)
+    this.contentWidgetId = contentWidget.getId()
+    this.editor.addContentWidget(contentWidget)
+  }
+}
+
+/**
+ * @param {Require} require
+ * @param {import('monaco-editor')} monaco
+ * @param {any} peekView
+ */
 function load(require, monaco, peekView) {
   const html = document.getElementById('code').childNodes[1].textContent
 
@@ -52,88 +164,41 @@ function load(require, monaco, peekView) {
     glyphMargin: true,
     contextmenu: false,
     readOnly: true,
+    theme: 'vs-dark',
   })
 
-  window.editor = editor
-
-  var decorations = editor.deltaDecorations(
-    [],
-    [
-      {
-        range: new monaco.Range(11, 20, 11, 20),
-        options: {
-          className: 'v8-deopt-marker',
-          beforeContentClassName: 'v8-deopt-marker-inline',
-          glyphMarginClassName: 'v8-deopt-marker-margin',
-          inlineClassNameAffectsLetterSpacing: true,
-        },
-      },
-    ]
-  )
-
-  // Add a content widget (scrolls inline with text)
-  var contentWidget = {
-    // allowEditorOverflow: true,
-    domNode: null,
-    getId: function () {
-      return 'my.content.widget'
-    },
-    getDomNode: function () {
-      if (!this.domNode) {
-        this.domNode = document.createElement('div')
-        this.domNode.className = 'v8-deopt-marker-content-widget ics'
-        this.domNode.innerHTML = '☎'
-        editor.applyFontInfo(this.domNode)
-      }
-      return this.domNode
-    },
-    getPosition: function () {
-      return {
-        position: {
-          lineNumber: 11,
-          column: 20,
-        },
-        preference: [monaco.editor.ContentWidgetPositionPreference.EXACT],
-      }
-    },
-  }
-  editor.addContentWidget(contentWidget)
-
-  class Test extends peekView.PeekViewWidget {
-    constructor(editor, options) {
-      super(editor, options)
+  class DeoptPeekView extends peekView.PeekViewWidget {
+    constructor(editor, markerData) {
+      super(editor, {
+        className: 'v8-deopt-peek-view',
+      })
       this.create()
     }
     _fillBody(container) {
       const title = document.createElement('h1')
       title.textContent = 'Hello World!'
       container.appendChild(title)
-      console.log(container)
     }
   }
 
-  const options = {
-    className: 'test-peek-widget',
-    keepEditorSelection: true,
+  const markerMap = new Map()
+  for (const marker of markers) {
+    const deoptMarker = new DeoptMarker(editor, marker, DeoptPeekView, monaco)
+    markerMap.set(deoptMarker.contentWidgetId, deoptMarker)
   }
 
-  const t = new Test(editor, options)
-  t.show(
-    {
-      startLineNumber: 11,
-      startColumn: 20,
-      endLineNumber: 11,
-      endColumn: 20,
-    },
-    18
-  )
-
   editor.onMouseDown(function (e) {
-    console.log('mousedown:', e.target.toString())
+    const contentWidgetId = e.target.detail
+    if (markerMap.has(contentWidgetId)) {
+      markerMap.get(contentWidgetId).showPeekView()
+    }
   })
 }
 
-/** @type {(...args: any[]) => any} */
+/**
+ * @typedef {(deps: string[], loader: (...args) => void) => void} Require
+ * @type {Require}
+ */
 const amdRequire = window.require
 const deps = amdRequire(
   ['require', 'vs/editor/editor.main', 'vs/editor/contrib/peekView/peekView'],
