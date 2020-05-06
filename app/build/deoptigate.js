@@ -758,18 +758,6 @@ module.exports = {
 const Prism = require('prismjs')
 require('prismjs/plugins/line-numbers/prism-line-numbers')
 
-const DEBUG = true
-function validateLoc(lineCount, columnCount, fullText) {
-  if (!DEBUG) { return }
-
-  const lineLengths = fullText.split('\n')
-  const expectedLine = lineLengths[lineCount - 1].replace(/\r$/, '')
-  const expectedColCount = expectedLine.length + 1
-  if (expectedColCount !== columnCount) {
-    console.error(`${lineCount}:`, expectedColCount, columnCount)
-  }
-}
-
 /**
  * @param {Node} element
  * @param {Node} root
@@ -790,92 +778,67 @@ function nextElement(element, root) {
   }
 }
 
-function getIcon(type) {
-  if (type == 'code') {
-    return '▲'
-  } else if (type == 'deopt') {
-    return '▼'
-  } else {
-    return '☎'
-  }
-}
-
-function locHasMarker(markers, curLine, curColumn) {
-  const nextMarker = markers[0]
+/**
+ * @param {MarkerResolver} markerResolver
+ * @param {number} curLine
+ * @param {number} curColumn
+ */
+function locHasMarker(markerResolver, curLine, curColumn) {
+  const nextLocation = markerResolver.nextLocation()
   return (
-    markers.length > 0 &&
-    curLine == nextMarker.line &&
-    curColumn >= nextMarker.column
+    nextLocation &&
+    curLine == nextLocation.line &&
+    curColumn >= nextLocation.column
   )
 }
 
-function consumeMarkers(element, markers, curLine, curColumn) {
+/**
+ * @typedef {import('../../lib/rendering/marker-resolver')} MarkerResolver
+ * @param {Node} element
+ * @param {MarkerResolver} markerResolver
+ * @param {number} curLine
+ * @param {number} curColumn
+ */
+function consumeMarkers(element, markerResolver, curLine, curColumn) {
   let refChild = element
-  while (locHasMarker(markers, curLine, curColumn)) {
-    const marker = markers.shift()
+  while (locHasMarker(markerResolver, curLine, curColumn)) {
+    const { insertBefore, insertAfter } = markerResolver.resolve(
+      markerResolver.nextLocation()
+    )
 
-    const lastMark = document.createElement('mark')
-    lastMark.textContent = getIcon(marker.type)
+    const div = document.createElement('div')
+    div.innerHTML = insertBefore + insertAfter
 
-    element.parentNode.insertBefore(lastMark, refChild.nextSibling)
-    refChild = lastMark
+    const childNodes = Array.from(div.childNodes);
+    for (let i = 0; i < childNodes.length; i++) {
+      const child = childNodes[i]
+
+      element.parentNode.insertBefore(child, refChild.nextSibling)
+      refChild = child
+    }
   }
 
   return refChild
 }
 
-const typeOrder = ['code', 'deopt', 'ics']
-function sortMarkers(markers) {
-  return markers.sort((loc1, loc2) => {
-    if (loc1.line != loc2.line) {
-      return loc1.line - loc2.line
-    } else if (loc1.column != loc2.column) {
-      return loc1.column - loc2.column
-    } else if (loc1.type != loc2.type) {
-      return typeOrder.indexOf(loc1.type) - typeOrder.indexOf(loc2.type)
-    } else {
-      return 0
-    }
-  })
-}
-
-const markers = sortMarkers([
-  { line: 9, column: 27, type: 'code' },
-  { line: 11, column: 20, type: 'code' },
-  { line: 95, column: 22, type: 'code' },
-  { line: 98, column: 33, type: 'deopt' },
-  { line: 98, column: 33, type: 'ics' },
-  { line: 98, column: 39, type: 'ics' },
-  { line: 99, column: 18, type: 'deopt' },
-  { line: 109, column: 17, type: 'deopt' },
-  { line: 109, column: 17, type: 'ics' },
-  { line: 111, column: 21, type: 'ics' },
-  { line: 139, column: 26, type: 'code' },
-  { line: 142, column: 34, type: 'deopt' },
-])
-
+/** @type {(markerResolver: MarkerResolver) => (env: Prism.Environment) => void} */
 const addMarkersPlugin = (markerResolver) => (env) => {
-  let code = ''
-
   /** @type {Node} */
   const root = env.element
   /** @type {Node} */
   let element = root.firstChild
+
   let lineCount = 1,
     columnCount = 1
   while (element) {
     if (element.nodeType == 3 /* TEXT_NODE */) {
       const text = element.data
-      code += text
 
       // Handle of text node contains multiple lines
       // TODO - Inserting markers in the middle of a text node doesn't work
       const lines = text.split('\n')
       for (let i = 0; i < lines.length; i++) {
         if (i > 0) {
-          // Reached end of line
-          validateLoc(lineCount, columnCount, env.code)
-
           lineCount += 1
           columnCount = 1
         }
@@ -883,10 +846,10 @@ const addMarkersPlugin = (markerResolver) => (env) => {
         const line = lines[i]
         columnCount += line.length
 
-        if (locHasMarker(markers, lineCount, columnCount)) {
+        if (locHasMarker(markerResolver, lineCount, columnCount)) {
           const lastMark = consumeMarkers(
             element,
-            markers,
+            markerResolver,
             lineCount,
             columnCount
           )
@@ -898,8 +861,6 @@ const addMarkersPlugin = (markerResolver) => (env) => {
 
     element = nextElement(element, root)
   }
-
-  console.log(code == env.code, lineCount == 158, columnCount == 8)
 }
 
 function highlightHtml(code, markerResolver) {
