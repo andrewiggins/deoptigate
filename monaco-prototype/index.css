@@ -8,31 +8,33 @@ body {
   overflow: hidden;
 }
 
-.myGlyphMarginClass {
+.v8-deopt-marker-margin {
   background: red;
 }
-.myDecorClass {
-  background: lightblue;
+
+.v8-deopt-marker-inline {
+  display: inline-block;
+  width: 15px;
 }
 
-.ics-content-widget {
+.v8-deopt-marker-content-widget {
   box-sizing: border-box;
   height: 19px;
   width: 16px;
   margin-left: -14px;
-  color: #4cb5ff;;
+  color: #4cb5ff;
   cursor: pointer;
   user-select: none;
 
   border: 1px solid transparent;
 }
 
-.ics-content-widget:hover,
-.ics-content-widget:focus {
+.v8-deopt-marker-content-widget:hover,
+.v8-deopt-marker-content-widget:focus {
   border: 1px solid red;
 }
 
-.ics-content-widget.active {
+.v8-deopt-marker-content-widget.active {
   background-color: yellow;
   border: 1px solid blue;
 
@@ -40,25 +42,4 @@ body {
   /* height: 20px; */
   /* margin-left: -16px; */
   /* padding-left: 2px; */
-}
-
-.phone-decor-before {
-  display: inline-block;
-  width: 15px;
-}
-
-/* Only useful if it inherits font styles but most code fonts don't contain these symbols */
-/* .phone-decor-before:before {
-    content: "☎";
-    width: 14px;
-    height: 17px;
-    color: blue;
-    display: inline-block;
-    padding-left: 2px;
-    cursor: pointer;
-} */
-
-.phone-decor-inline {
-  display: inline-block;
-  margin-left: 14px;
 }
