@@ -11,6 +11,7 @@ const Theme = require('../theme.browser')
 const MarkerResolver = require('../../lib/rendering/marker-resolver')
 
 const markOnly = require('../../lib/rendering/mark-only')
+const highlightHtml = require('../lib/highlight-html');
 
 const MAX_HIGHLIGHT_LEN = 1E5
 
@@ -99,6 +100,11 @@ class CodeView extends Component {
     const { fileName, code, highlightCode } = this.props
     const nohighlight = !highlightCode || code.length > MAX_HIGHLIGHT_LEN
     if (nohighlight) return markOnly(code, markerResolver)
+
+    if (fileName.endsWith('.html')) {
+      return highlightHtml(code, markerResolver)
+    }
+
     try {
       try {
         // Highlighting without jsx support allows peacock to only parse out tokens
